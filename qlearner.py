@@ -4,7 +4,7 @@ import gym
 import numpy as np
 
 env = gym.make('FrozenLake-v0')
-env.monitor.start('qlearner', force=True)
+env.monitor.start('recordings', force=True)
 
 Q = np.zeros((env.observation_space.n, env.action_space.n)) # initialize Q matrix to zeros
 
@@ -26,22 +26,26 @@ for i_episode in xrange(num_episodes):
 
         # choose optimal action
         if np.random.rand() > epsilon:
-            action = np.argmax(Q[state,:])  # choose best action according to current Q matrix
+            action = np.argmax(Q[state, :])  # choose best action according to current Q matrix
         else:
             action = action = env.action_space.sample()     # random action
 
         # take action and observe state and reward
         observation, reward, done, info = env.step(action)
 
-    # update Q matrix
-    if reward == 0:
-        # if we fell in a hole, reward is -100
-        R = -100
-    else:
-        # if we reached goal, reward is 100
-        R = 100
-    # Q-learning update
-    Q[state, action] += alpha * (R + np.max(Q[observation,:]) - Q[state,action])
+        if done:
+            # update Q matrix
+            if reward == 0:
+                # if we fell in a hole, reward is bad
+                R = -100.0
+            else:
+                # if we reached goal, reward is good
+                R = 100.0
+        else:
+            R = -0.001 # cost of life
+
+        # Q-learning update
+        Q[state, action] += alpha * (R + np.max(Q[observation, :]) - Q[state, action])
 
     # decay epsilon
     epsilon *= epsilon_decay
